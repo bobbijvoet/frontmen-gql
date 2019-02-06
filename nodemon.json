@@ -12,10 +12,10 @@
   
   "runOnChangeOnly": false,
   "watch": [
-    "src/**/*.js"
+    "src/**/*.ts"
   ],
   "env": {
     "NODE_ENV": "development"
   },
-  "ext": "js,json,graphql"
+  "ext": "ts,js,json,graphql"
 }

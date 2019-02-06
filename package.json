@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "rimraf dist && babel src --out-dir dist --ignore '**/*.spec.js'",
+    "build": "rimraf dist && babel src --extensions \".ts\" --out-dir dist --ignore '**/*.spec.js'",
     "dev": "nodemon --exec yarn restart",
     "restart": "yarn build && node dist/index.js",
     "test": "jest --forceExit --detectOpenHandles --runInBand"
@@ -28,6 +28,7 @@
     "@babel/core": "^7.2.2",
     "@babel/plugin-proposal-object-rest-spread": "^7.3.1",
     "@babel/preset-env": "^7.3.1",
+    "@babel/preset-typescript": "^7.1.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.0.0",

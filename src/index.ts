@@ -1,8 +1,23 @@
-import { ApolloServer } from 'apollo-server'
-import gql from 'graphql-tag'
-import Auth from './auth'
+import { ApolloServer } from 'apollo-server';
+import gql from 'graphql-tag';
+import Auth from './auth';
 
-const db = {
+type Agreement = {
+  id: string;
+  balance: number;
+  name: string;
+
+  holder?: Holder;
+};
+
+type Holder = {
+  id: string;
+  name: string;
+
+  agreements?: Agreement[];
+};
+
+const db: { agreements: Agreement[]; holders: Holder[] } = {
   agreements: [],
   holders: [
     {
@@ -14,12 +29,12 @@ const db = {
       id: '2'
     }
   ]
-}
+};
 
-let idCounter = 0
+let idCounter = 0;
 
 const typeDefs = gql`
-  directive @auth on FIELD_DEFINITION
+  directive @auth on FIELD_DEFINITION | MUTATION
 
   type Holder {
     id: ID
@@ -44,17 +59,17 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createAgreement(input: NewAgreementInput!): Agreement
+    createAgreement(input: NewAgreementInput!): Agreement @auth
   }
-`
+`;
 
 const resolvers = {
   Query: {
     Agreements(_, args) {
       if (args.id) {
-        return [db.agreements.find(a => a.id === +args.id)]
+        return [db.agreements.find(a => a.id === +args.id)];
       }
-      return db.agreements
+      return db.agreements;
     }
   },
 
@@ -64,26 +79,26 @@ const resolvers = {
         id: idCounter++,
         balance: 0,
         ...input
-      }
-      db.agreements.push(agreement)
-      return agreement
+      };
+      db.agreements.push(agreement);
+      return agreement;
     }
   },
 
   Agreement: {
     holder(agreement) {
       // console.log(JSON.stringify(agreement, null, 2))
-      return db.holders.find(h => h.id === agreement.holder)
+      return db.holders.find(h => h.id === agreement.holder);
     }
   },
 
   Holder: {
     agreements(holder) {
-      console.log(JSON.stringify(db, null, 2))
-      return db.agreements.filter(a => a.holder === holder.id)
+      console.log(JSON.stringify(db, null, 2));
+      return db.agreements.filter(a => a.holder === holder.id);
     }
   }
-}
+};
 
 const server = new ApolloServer({
   typeDefs,
@@ -97,8 +112,9 @@ const server = new ApolloServer({
   schemaDirectives: {
     auth: Auth
   }
-})
+});
+
 server
   .listen()
   .then(({ url }) => console.log(`listening on ${url}`))
-  .catch(console.error.bind)
+  .catch(console.error.bind);
