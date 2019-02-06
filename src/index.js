@@ -1,49 +1,52 @@
-import { ApolloServer } from 'apollo-server';
-import gql from 'graphql-tag';
+import { ApolloServer } from 'apollo-server'
+import gql from 'graphql-tag'
 import Auth from './auth'
 
 const db = {
   agreements: [],
   holders: [
     {
-      name: "Bob",
-      id: "1"
+      name: 'Bob',
+      id: '1'
+    },
+    {
+      name: 'Albert',
+      id: '2'
     }
   ]
 }
 
-let idCounter = 0;
+let idCounter = 0
 
 const typeDefs = gql`
-  
   directive @auth on FIELD_DEFINITION
 
   type Holder {
-    id:ID
-    name:String 
+    id: ID
+    name: String
     agreements: [Agreement]
   }
 
   type Agreement {
-    id:ID
-    balance:Float
-    holder:Holder 
-    name:String
+    id: ID
+    balance: Float
+    holder: Holder
+    name: String
   }
-  
+
   type Query {
-    Agreements(id:ID):[Agreement] 
+    Agreements(id: ID): [Agreement]
   }
 
   input NewAgreementInput {
-    holder:ID
-    name:String
+    holder: ID
+    name: String
   }
 
   type Mutation {
-    createAgreement(input:NewAgreementInput!):Agreement
+    createAgreement(input: NewAgreementInput!): Agreement
   }
-`;
+`
 
 const resolvers = {
   Query: {
@@ -75,26 +78,27 @@ const resolvers = {
   },
 
   Holder: {
-    agreements(holder){
+    agreements(holder) {
       console.log(JSON.stringify(db, null, 2))
-      return db.agreements.filter(a => a.holder === holder.id) 
+      return db.agreements.filter(a => a.holder === holder.id)
     }
   }
+}
 
-
-};
-
-
-
-const server = new ApolloServer({ 
-  typeDefs, 
-  resolvers, 
-  context: ({req}) => ({
-    isAuth:false
-  })
-  ,
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => ({
+    auth: {
+      isAuth: true,
+      holder: 2
+    }
+  }),
   schemaDirectives: {
     auth: Auth
-  } 
+  }
 })
-server.listen();
+server
+  .listen()
+  .then(({ url }) => console.log(`listening on ${url}`))
+  .catch(console.error.bind)
