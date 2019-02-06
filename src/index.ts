@@ -1,21 +1,22 @@
-import { ApolloServer } from 'apollo-server';
-import gql from 'graphql-tag';
-import Auth from './auth';
+import { ApolloServer } from 'apollo-server'
+import gql from 'graphql-tag'
+import Auth from './auth'
+import fetch from 'node-fetch'
 
 type Agreement = {
-  id: string;
-  balance: number;
-  name: string;
+  id: string
+  balance: number
+  name: string
 
-  holder?: Holder;
-};
+  holder?: Holder
+}
 
 type Holder = {
-  id: string;
-  name: string;
+  id: string
+  name: string
 
-  agreements?: Agreement[];
-};
+  agreements?: Agreement[]
+}
 
 const db: { agreements: Agreement[]; holders: Holder[] } = {
   agreements: [],
@@ -29,9 +30,9 @@ const db: { agreements: Agreement[]; holders: Holder[] } = {
       id: '2'
     }
   ]
-};
+}
 
-let idCounter = 0;
+let idCounter = 0
 
 const typeDefs = gql`
   directive @auth on FIELD_DEFINITION | MUTATION
@@ -39,7 +40,14 @@ const typeDefs = gql`
   type Holder {
     id: ID
     name: String
+    posts: [Post]
+
     agreements: [Agreement]
+  }
+
+  type Post {
+    title: String
+    author: String
   }
 
   type Agreement {
@@ -61,15 +69,15 @@ const typeDefs = gql`
   type Mutation {
     createAgreement(input: NewAgreementInput!): Agreement @auth
   }
-`;
+`
 
 const resolvers = {
   Query: {
     Agreements(_, args) {
       if (args.id) {
-        return [db.agreements.find(a => a.id === +args.id)];
+        return [db.agreements.find(a => parseInt(a.id) === parseInt(args.id))]
       }
-      return db.agreements;
+      return db.agreements
     }
   },
 
@@ -79,28 +87,32 @@ const resolvers = {
         id: idCounter++,
         balance: 0,
         ...input
-      };
-      db.agreements.push(agreement);
-      return agreement;
+      }
+      db.agreements.push(agreement)
+      return agreement
     }
   },
 
   Agreement: {
     holder(agreement) {
-      // console.log(JSON.stringify(agreement, null, 2))
-      return db.holders.find(h => h.id === agreement.holder);
+      return db.holders.find(h => h.id === agreement.holder)
     }
   },
 
   Holder: {
     agreements(holder) {
-      console.log(JSON.stringify(db, null, 2));
-      return db.agreements.filter(a => a.holder === holder.id);
+      return db.agreements.filter(a => a.holder === holder.id)
+    },
+    posts() {
+      return fetch('http://reddit.com/.json')
+        .then(x => x.json())
+        .then(x => x.data.children.map(y => y.data))
     }
   }
-};
+}
 
 const server = new ApolloServer({
+  tracing: true,
   typeDefs,
   resolvers,
   context: ({ req }) => ({
@@ -112,9 +124,9 @@ const server = new ApolloServer({
   schemaDirectives: {
     auth: Auth
   }
-});
+})
 
 server
   .listen()
   .then(({ url }) => console.log(`listening on ${url}`))
-  .catch(console.error.bind);
+  .catch(console.error.bind)
